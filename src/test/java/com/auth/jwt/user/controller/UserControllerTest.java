@@ -2,6 +2,7 @@ package com.auth.jwt.user.controller;
 
 import com.auth.jwt.user.service.dto.UserCreateDto;
 import com.auth.jwt.user.service.dto.UserInfoDto;
+import com.auth.jwt.user.service.dto.UserLoginDto;
 import com.auth.jwt.web.advice.ErrorMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,8 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 class UserControllerTest {
     private static final String API_USER = "/api/users";
 
+    private static int INDEX = 0;
+
     @Autowired
     private WebTestClient webTestClient;
 
@@ -25,9 +28,19 @@ class UserControllerTest {
 
     @BeforeEach
     void setUp() {
-        userCreateDto = new UserCreateDto("whale", "password");
+        userCreateDto = new UserCreateDto("whale" + INDEX++, "password", "etc");
 
-        token = post(API_USER, userCreateDto)
+        // Sign up
+        post(API_USER, userCreateDto)
+                .expectStatus().isOk();
+
+        // Sign in & get token
+        UserLoginDto userLoginDto = new UserLoginDto(userCreateDto.getNickName(), userCreateDto.getPassword());
+        token = loginAndGetToken(userLoginDto);
+    }
+
+    private String loginAndGetToken(UserLoginDto userLoginDto) {
+        return post(API_USER + "/login", userLoginDto)
                 .expectStatus().isOk()
                 .expectHeader().exists(AUTHORIZATION)
                 .expectBody()
@@ -38,10 +51,7 @@ class UserControllerTest {
 
     @Test
     void authorizedRequest() {
-        UserInfoDto userInfoDto = webTestClient.get()
-                .uri(API_USER + "/{userId}", 1L)
-                .header(AUTHORIZATION, token)
-                .exchange()
+        UserInfoDto userInfoDto = get(API_USER + "/{userId}", INDEX)
                 .expectStatus().isOk()
                 .expectBody(UserInfoDto.class)
                 .returnResult()
@@ -52,15 +62,33 @@ class UserControllerTest {
 
     @Test
     void unauthorizedRequest() {
-        ErrorMessage errorMessage = webTestClient.get()
-                .uri(API_USER + "/{userId}", 1L)
-                .exchange()
+        ErrorMessage errorMessage = getWithoutLogin(API_USER + "/{userId}", INDEX)
                 .expectStatus().isUnauthorized()
                 .expectBody(ErrorMessage.class)
                 .returnResult()
                 .getResponseBody();
 
         assertThat(errorMessage.getMessage()).contains("권한");
+    }
+
+    @Test
+    void login_fail() {
+        UserLoginDto wrongUserLoginDto = new UserLoginDto("whale" + INDEX, "wrong_password");
+        post(API_USER + "/login", wrongUserLoginDto)
+                .expectStatus().isUnauthorized();
+    }
+
+    private WebTestClient.ResponseSpec getWithoutLogin(String uri, Object uriVariables) {
+        return webTestClient.get()
+                .uri(uri, uriVariables)
+                .exchange();
+    }
+
+    private WebTestClient.ResponseSpec get(String uri, Object uriVariables) {
+        return webTestClient.get()
+                .uri(uri, uriVariables)
+                .header(AUTHORIZATION, token)
+                .exchange();
     }
 
     private <T> WebTestClient.ResponseSpec post(String uri, T dto) {

@@ -4,6 +4,7 @@ import com.auth.jwt.user.service.JwtSupporter;
 import com.auth.jwt.user.service.UserService;
 import com.auth.jwt.user.service.dto.UserCreateDto;
 import com.auth.jwt.user.service.dto.UserInfoDto;
+import com.auth.jwt.user.service.dto.UserLoginDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,15 +25,21 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<?> signUp(@RequestBody UserCreateDto userCreateDto) {
-        UserInfoDto savedUserInfo = userService.save(userCreateDto);
-
-        return ResponseEntity.ok()
-                .header(AUTHORIZATION, jwtSupporter.createToken(USER, savedUserInfo))
-                .build();
+        userService.save(userCreateDto);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{userId}")
     public ResponseEntity<UserInfoDto> profile(@PathVariable long userId) {
         return ResponseEntity.ok(userService.findUserInfoById(userId));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody UserLoginDto userLoginDto) {
+        UserInfoDto userInfoDto = userService.findUserInfoById(userLoginDto);
+
+        return ResponseEntity.ok()
+                .header(AUTHORIZATION, jwtSupporter.createToken(USER, userInfoDto))
+                .build();
     }
 }
