@@ -1,30 +1,38 @@
 package com.auth.jwt.user.controller;
 
-import com.auth.jwt.user.service.JwtService;
+import com.auth.jwt.user.service.JwtSupporter;
 import com.auth.jwt.user.service.UserService;
 import com.auth.jwt.user.service.dto.UserCreateDto;
 import com.auth.jwt.user.service.dto.UserInfoDto;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-    private final UserService userService;
-    private final JwtService jwtService;
+    private static final String USER = "user";
 
-    public UserController(UserService userService, JwtService jwtService) {
+    private final UserService userService;
+    private final JwtSupporter jwtSupporter;
+
+    public UserController(UserService userService, JwtSupporter jwtSupporter) {
         this.userService = userService;
-        this.jwtService = jwtService;
+        this.jwtSupporter = jwtSupporter;
     }
 
     @PostMapping
     public ResponseEntity<?> signUp(@RequestBody UserCreateDto userCreateDto) {
         UserInfoDto savedUserInfo = userService.save(userCreateDto);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok()
+                .header(AUTHORIZATION, jwtSupporter.createToken(USER, savedUserInfo))
+                .build();
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserInfoDto> profile(@PathVariable long userId) {
+        return ResponseEntity.ok(userService.findUserInfoById(userId));
     }
 }
