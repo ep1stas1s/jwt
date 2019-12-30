@@ -11,11 +11,13 @@ import lombok.*;
 public class UserCreateDto {
     private String nickName;
     private String password;
+    private String etc;
 
     public User toEntity() {
         return User.builder()
                 .nickName(nickName)
                 .password(password)
+                .etc(etc)
                 .build();
     }
 }
