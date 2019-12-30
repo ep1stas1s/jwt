@@ -13,6 +13,8 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 
 import javax.servlet.http.HttpServletRequest;
 
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+
 public class JwtResolver implements HandlerMethodArgumentResolver {
     private final JwtSupporter jwtSupporter;
 
@@ -28,7 +30,7 @@ public class JwtResolver implements HandlerMethodArgumentResolver {
     @Override
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
         HttpServletRequest request = (HttpServletRequest) webRequest.getNativeRequest();
-        String token = request.getHeader(JwtInterceptor.AUTHORIZATION);
+        String token = request.getHeader(AUTHORIZATION);
 
         return parseTokenToUserInfoDto(token);
     }
