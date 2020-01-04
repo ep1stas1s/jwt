@@ -1,7 +1,6 @@
 package com.auth.jwt.user.service;
 
 import com.auth.jwt.user.service.dto.UserInfoDto;
-import com.auth.jwt.user.service.exception.UnAuthorizedException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
@@ -21,17 +20,17 @@ public class JwtSupporter {
     public static final String ID = "id";
     public static final String NICK_NAME = "nickName";
 
+    private static final String USER = "user";
     private static final int ONE_HOUR = 60 * 60 * 1000;
 
     // TODO: 2019-12-30 properties...
     private static final String SECRET_KEY = "I am the KILLER WHALE";
-    private static final String REG_DATE = "regDate";
 
-    public String createToken(String subject, UserInfoDto userInfoDto) {
+    public String createToken(UserInfoDto userInfoDto) {
         return Jwts.builder()
                 .setHeaderParam(TYPE, JWT_TYPE)
-                .setHeaderParam(REG_DATE, System.currentTimeMillis())
-                .setSubject(subject)
+                .setSubject(USER)
+                .setIssuedAt(new Date())
                 .setExpiration(calculateExpiration())
                 .claim(ID, userInfoDto.getId())
                 .claim(NICK_NAME, userInfoDto.getNickName())
@@ -49,18 +48,19 @@ public class JwtSupporter {
 
     public boolean isUsable(String token) {
         try {
-            // TODO: 2019-12-30 한 번에 boolean 리턴하는 방법?
-            Jws<Claims> claims = parseToken(token);
+            parseToken(token);
             return true;
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new UnAuthorizedException();
+            return false;
         }
     }
 
     private Jws<Claims> parseToken(String token) {
+
         return Jwts.parser()
                 .setSigningKey(generateKey())
+                .requireSubject(USER)
                 .parseClaimsJws(token);
     }
 

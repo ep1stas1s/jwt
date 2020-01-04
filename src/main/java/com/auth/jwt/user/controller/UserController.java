@@ -13,8 +13,6 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-    private static final String USER = "user";
-
     private final UserService userService;
     private final JwtSupporter jwtSupporter;
 
@@ -39,7 +37,7 @@ public class UserController {
         UserInfoDto userInfoDto = userService.findUserInfoById(userLoginDto);
 
         return ResponseEntity.ok()
-                .header(AUTHORIZATION, jwtSupporter.createToken(USER, userInfoDto))
+                .header(AUTHORIZATION, jwtSupporter.createToken(userInfoDto))
                 .build();
     }
 }
