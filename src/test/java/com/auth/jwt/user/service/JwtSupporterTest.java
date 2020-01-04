@@ -3,23 +3,24 @@ package com.auth.jwt.user.service;
 import com.auth.jwt.user.service.dto.UserInfoDto;
 import com.auth.jwt.user.service.exception.UnAuthorizedException;
 import io.jsonwebtoken.Claims;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@Slf4j
 class JwtSupporterTest {
     private static final JwtSupporter JWT_SUPPORTER = new JwtSupporter();
 
     @Test
     void createAndParseToken() {
         UserInfoDto user = new UserInfoDto(1L, "whale");
-
         String token = JWT_SUPPORTER.createToken("user", user);
+        log.debug(token);
         assertThat(JWT_SUPPORTER.isUsable(token)).isTrue();
 
         Claims claims = JWT_SUPPORTER.parseAndGetBody(token);
-
         assertThat(claims.get(JwtSupporter.ID, Long.class)).isEqualTo(user.getId());
         assertThat(claims.get(JwtSupporter.NICK_NAME, String.class)).isEqualTo(user.getNickName());
     }
